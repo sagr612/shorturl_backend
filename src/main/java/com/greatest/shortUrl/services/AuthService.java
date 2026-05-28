@@ -25,8 +25,8 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepo;
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
-    private final MailService mailService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -101,16 +101,22 @@ public class AuthService {
                         "/reset-password?token=" +
                         token;
 
-        mailService.sendMail(
+//        mailService.sendMail(
+//                user.getEmail(),
+//                "Reset Your Password",
+//                """
+//                Click the link below to reset your password:
+//
+//                %s
+//
+//                This link expires in 15 minutes.
+//                """.formatted(resetLink)
+//        );
+
+        emailService.sendEmail(
                 user.getEmail(),
                 "Reset Your Password",
-                """
-                Click the link below to reset your password:
-    
-                %s
-    
-                This link expires in 15 minutes.
-                """.formatted(resetLink)
+                "<h2>Reset Password</h2><a href='" + resetLink + "'>Reset</a> "
         );
     }
 
