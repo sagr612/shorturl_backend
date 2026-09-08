@@ -1,7 +1,7 @@
 package com.greatest.shortUrl.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

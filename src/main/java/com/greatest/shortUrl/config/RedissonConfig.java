@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.auth;
+package com.greatest.shortUrl.config;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -27,8 +27,10 @@ public class RedissonConfig {
         config.useSingleServer()
                 .setAddress(
                         "rediss://" + host + ":" + port
-                )
-                .setPassword(password);
+//                        redis -> local redis
+//                        rediss -> redis over tls/ssl
+                );
+               .setPassword(password); for tls
 
         return Redisson.create(config);
     }

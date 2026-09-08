@@ -1,9 +1,9 @@
 package com.greatest.shortUrl.services;
 
-import com.greatest.shortUrl.entitiy.ShortUrl;
-import com.greatest.shortUrl.model.CachedShortUrlDto;
+import com.greatest.shortUrl.entity.ShortUrl;
 import com.greatest.shortUrl.model.ShortUrlDto;
 import com.greatest.shortUrl.repository.ShortUrlRepo;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -18,10 +18,12 @@ public class CachedShortUrlService {
 
     private final ShortUrlRepo shortUrlRepo;
     private final EntityMapper entityMapper;
+    private final MeterRegistry meterRegistry;
 
     @Cacheable(value = "USERS_DATA", key = "#shortKey")
     public ShortUrlDto getShortUrl(String shortKey) {
         log.debug("Cache MISS for shortKey: {}", shortKey);
+        meterRegistry.counter("shorturl_cache_miss").increment();
         ShortUrl shortUrl = shortUrlRepo.findByShortKey(shortKey).orElse(null);
         if (shortUrl == null) return null;
         return entityMapper.toShortUrlDto(shortUrl);

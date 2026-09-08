@@ -1,8 +1,7 @@
-package com.greatest.shortUrl.auth;
+package com.greatest.shortUrl.config;
 
 
 import com.greatest.shortUrl.services.UserDetailsServiceImpl;
-import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

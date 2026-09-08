@@ -1,14 +1,13 @@
 package com.greatest.shortUrl.services;
 
-import com.greatest.shortUrl.entitiy.PasswordResetToken;
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.PasswordResetToken;
+import com.greatest.shortUrl.entity.User;
+import com.greatest.shortUrl.exceptions.InvalidTokenException;
+import com.greatest.shortUrl.exceptions.TokenExpiredException;
 import com.greatest.shortUrl.repository.PasswordResetTokenRepository;
 import com.greatest.shortUrl.repository.RefreshTokenRepository;
 import com.greatest.shortUrl.repository.UserRepo;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.SecondaryRow;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,14 +33,15 @@ public class AuthService {
     @Transactional
     public void resetPassword(String token, String newPassword) {
 
-        PasswordResetToken resetToken = passwordResetTokenRepo.findByToken(token).orElseThrow(() -> new RuntimeException("Invalid reset token"));
+        PasswordResetToken resetToken = passwordResetTokenRepo
+                .findByToken(token).orElseThrow(() -> new InvalidTokenException("Invalid reset token"));
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Reset token already used");
+            throw new InvalidTokenException("Reset token already used");
         }
 
         if (resetToken.getExpiresAt().isBefore(Instant.now())) {
-            throw new RuntimeException("Reset token expired");
+            throw new TokenExpiredException("Reset token expired");
         }
 
         User user = resetToken.getUser();

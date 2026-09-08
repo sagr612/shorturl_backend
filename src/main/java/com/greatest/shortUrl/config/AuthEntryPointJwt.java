@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.auth;
+package com.greatest.shortUrl.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;

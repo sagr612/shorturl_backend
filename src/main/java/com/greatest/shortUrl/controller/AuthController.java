@@ -1,8 +1,8 @@
 package com.greatest.shortUrl.controller;
 
-import com.greatest.shortUrl.auth.JwtUtils;
-import com.greatest.shortUrl.entitiy.RefreshToken;
-import com.greatest.shortUrl.exceptions.InvalidTokenException;
+import com.greatest.shortUrl.config.JwtUtils;
+import com.greatest.shortUrl.entity.RefreshToken;
+import com.greatest.shortUrl.exceptions.UnauthorizedException;
 import com.greatest.shortUrl.exceptions.UserAlreadyExistsException;
 import com.greatest.shortUrl.model.*;
 import com.greatest.shortUrl.services.AuthService;
@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -63,7 +62,7 @@ public class AuthController {
     public ResponseEntity<JwtResponseDTO> AuthenticateAndGetToken(@Valid @RequestBody AuthRequestDTO authRequestDTO) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequestDTO.getEmail(), authRequestDTO.getPassword()));
         if (!authentication.isAuthenticated()) {
-            throw new RuntimeException("Authentication failed");
+            throw new UnauthorizedException("Authentication failed");
         }
         UserDetailsImpl user = (UserDetailsImpl) authentication.getPrincipal();
         String jwtToken = jwtUtils.generateJwtToken(user);

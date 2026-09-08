@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.auth;
+package com.greatest.shortUrl.config;
 
 import org.redisson.api.RedissonClient;
 import org.redisson.spring.cache.CacheConfig;
@@ -19,7 +19,7 @@ public class RedisConfig {
     @Bean
     public CacheManager cacheManager(RedissonClient redissonClient) {
         Map<String, CacheConfig> cacheConfigMap=new HashMap<>();
-        cacheConfigMap.put("USERS_DATA", new CacheConfig(Duration.ofMinutes(100).toMillis(), Duration.ofMinutes(200).toMillis()));
+        cacheConfigMap.put("USERS_DATA", new CacheConfig(Duration.ofMinutes(100).toMillis(), Duration.ofMinutes(60).toMillis()));
         return new RedissonSpringCacheManager(redissonClient, cacheConfigMap);
     }
 }

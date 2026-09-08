@@ -6,6 +6,7 @@ import com.greatest.shortUrl.model.CachedShortUrlDto;
 import com.greatest.shortUrl.model.ShortUrlDto;
 import com.greatest.shortUrl.services.SecurityUtils;
 import com.greatest.shortUrl.services.ShortUrlService;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,8 @@ public class RedirectController {
     private final ShortUrlService shortUrlService;
     private final SecurityUtils securityUtils;
     private final ApplicationProperties properties;
+
+    @Timed(value = "shorturl_private_redirect", description = "Time to resolve and redirect a private short URL")
     @GetMapping("/s/{shortKey}")
     ResponseEntity<String> redirectToOriginalUrl(@PathVariable String shortKey) {
         String userId = securityUtils.getCurrentUserId();
@@ -33,7 +36,7 @@ public class RedirectController {
         ShortUrlDto shortUrlDto = shortUrlDtoOptional.get();
         return ResponseEntity.status(HttpStatus.OK).body(shortUrlDto.getOriginalUrl());
     }
-
+    @Timed(value = "shorturl_public_redirect", description = "Time to resolve and redirect a public short URL")
     @GetMapping("/s/public/{shortKey}")
     ResponseEntity<Void> publicRedirectToOriginalUrl(@PathVariable String shortKey) {
         Optional<ShortUrlDto> shortUrlDtoOptional = shortUrlService.accessPublicShortUrl(shortKey);

@@ -1,33 +1,22 @@
 package com.greatest.shortUrl.controller;
 
 import com.greatest.shortUrl.ApplicationProperties;
-import com.greatest.shortUrl.entitiy.ShortUrl;
-import com.greatest.shortUrl.exceptions.ShortUrlNotFoundException;
 import com.greatest.shortUrl.model.*;
 import com.greatest.shortUrl.services.SecurityUtils;
 import com.greatest.shortUrl.services.ShortUrlService;
 import jakarta.validation.Valid;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.ui.Model;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/shorten/")
 @Slf4j
-public class ShortUrlController {
+public class    ShortUrlController {
     private final ShortUrlService shortUrlService;
     private final SecurityUtils securityUtils;
     private final ApplicationProperties properties;

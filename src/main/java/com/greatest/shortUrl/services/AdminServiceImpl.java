@@ -1,16 +1,17 @@
 package com.greatest.shortUrl.services;
 
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.User;
 import com.greatest.shortUrl.model.*;
 import com.greatest.shortUrl.repository.ShortUrlRepo;
 import com.greatest.shortUrl.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +44,33 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<AdminUserDto> getAllUsers() {
         List<User> users = userRepo.findAll();
-        return users.stream().map(user -> new AdminUserDto(user.getId(), user.getName(), user.getEmail(), user.getRole().name(), user.getCreatedAt(), shortUrlRepo.countByCreatedById(user.getId()), shortUrlRepo.sumClicksByUserId(user.getId()))).toList();
+
+        // Single query: fetch per-user (urlCount, clickSum) grouped by userId.
+        // This avoids the N+1 problem — 1 query for users + 1 query for stats.
+        Map<String, long[]> statsById = shortUrlRepo.findUserUrlStats()
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (String) row[0],          // userId
+                        row -> new long[]{
+                                ((Number) row[1]).longValue(),  // urlCount
+                                ((Number) row[2]).longValue()   // clickSum
+                        }
+                ));
+
+        return users.stream()
+                .map(user -> {
+                    long[] stats = statsById.getOrDefault(user.getId(), new long[]{0L, 0L});
+                    return new AdminUserDto(
+                            user.getId(),
+                            user.getName(),
+                            user.getEmail(),
+                            user.getRole().name(),
+                            user.getCreatedAt(),
+                            stats[0],   // per-user URL count
+                            stats[1]    // per-user click sum
+                    );
+                })
+                .toList();
     }
 
     @Override

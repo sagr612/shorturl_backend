@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.auth;
+package com.greatest.shortUrl.config;
 
 
 import com.greatest.shortUrl.services.UserDetailsImpl;

@@ -1,27 +1,24 @@
 package com.greatest.shortUrl.services;
 
 import com.greatest.shortUrl.ApplicationProperties;
-import com.greatest.shortUrl.entitiy.ShortUrl;
+import com.greatest.shortUrl.entity.ShortUrl;
+import com.greatest.shortUrl.exceptions.ShortUrlNotFoundException;
+import com.greatest.shortUrl.exceptions.UnauthorizedException;
 import com.greatest.shortUrl.model.*;
 import com.greatest.shortUrl.repository.ShortUrlRepo;
 import com.greatest.shortUrl.repository.UserRepo;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static com.greatest.shortUrl.services.RandomUtils.generateRandomShortKey;
@@ -29,6 +26,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ShortUrlService {
     private final ShortUrlRepo shortUrlRepo;
     private final EntityMapper entityMapper;
@@ -45,42 +43,56 @@ public class ShortUrlService {
         return url.trim().replaceAll("#+$", "");
     }
 
+    /**
+     * Creates a short URL.
+     *
+     * Key design: we no longer do a SELECT-before-INSERT (TOCTOU race condition).
+     * Instead we attempt the INSERT directly and retry on a unique-key collision.
+     *
+     * With a 6-char base62 keyspace (62^6 ≈ 56 billion combinations) the collision
+     * probability per attempt is negligible, so MAX_RETRIES=3 is extremely conservative.
+     * The DB unique constraint (short_key UNIQUE) is the single source of truth.
+     */
+    private static final int MAX_KEY_GENERATION_RETRIES = 3;
+
     @Transactional
     public ShortUrlDto createShortUrl(@Valid CreateShortUrl createShortUrl, String userId) {
         if (properties.validateOriginalUrl()) {
             boolean urlExists = UrlExistenceValidator.isValid(normalizeUrl(createShortUrl.originalUrl()));
             if (!urlExists) {
-                throw new RuntimeException("Invalid URL " + createShortUrl.originalUrl());
+                throw new ShortUrlNotFoundException("Invalid URL " + createShortUrl.originalUrl());
             }
         }
-        var shortKey = generateUniqueShortKey();
-        var shortUrl = new ShortUrl();
-        shortUrl.setOriginalUrl(createShortUrl.originalUrl());
-        shortUrl.setShortKey(shortKey);
-        if (userId == null) {
-            shortUrl.setCreatedBy(null);
-            shortUrl.setIsPrivate(false);
-            shortUrl.setExpiresAt(Instant.now().plus(properties.defaultExpiryInDays(), DAYS));
-        } else {
-            shortUrl.setCreatedBy(userRepo.findById(userId).orElseThrow());
-            shortUrl.setIsPrivate(createShortUrl.isPrivate() != null && createShortUrl.isPrivate());
-            shortUrl.setExpiresAt(createShortUrl.expirationInDays() != null ? Instant.now().plus(createShortUrl.expirationInDays(), DAYS) : null);
-        }
-        shortUrl.setClickCount(0L);
-        shortUrl.setCreatedAt(Instant.now());
-        shortUrl.setStatus(UrlStatus.ACTIVE);
-        shortUrlRepo.save(shortUrl);
-//        return entityMapper.toShortUrlDto(shortUrl);
-        ShortUrlDto dto = entityMapper.toShortUrlDto(shortUrl);
-        return cachedShortUrlService.save(dto);
-    }
 
-    private String generateUniqueShortKey() {
-        String shortKey;
-        do {
-            shortKey = generateRandomShortKey();
-        } while (shortUrlRepo.existsByShortKey(shortKey));
-        return shortKey;
+        for (int attempt = 1; attempt <= MAX_KEY_GENERATION_RETRIES; attempt++) {
+            try {
+                var shortUrl = new ShortUrl();
+                shortUrl.setOriginalUrl(createShortUrl.originalUrl());
+                shortUrl.setShortKey(generateRandomShortKey()); // no SELECT — just try it
+                if (userId == null) {
+                    shortUrl.setCreatedBy(null);
+                    shortUrl.setIsPrivate(false);
+                    shortUrl.setExpiresAt(Instant.now().plus(properties.defaultExpiryInDays(), DAYS));
+                } else {
+                    shortUrl.setCreatedBy(userRepo.findById(userId).orElseThrow());
+                    shortUrl.setIsPrivate(createShortUrl.isPrivate() != null && createShortUrl.isPrivate());
+                    shortUrl.setExpiresAt(createShortUrl.expirationInDays() != null ? Instant.now().plus(createShortUrl.expirationInDays(), DAYS) : null);
+                }
+                shortUrl.setClickCount(0L);
+                shortUrl.setCreatedAt(Instant.now());
+                shortUrl.setStatus(UrlStatus.ACTIVE);
+                shortUrlRepo.saveAndFlush(shortUrl); // flush immediately so constraint fires here
+                ShortUrlDto dto = entityMapper.toShortUrlDto(shortUrl);
+                return cachedShortUrlService.save(dto);
+            } catch (DataIntegrityViolationException ex) {
+                // short_key collision — astronomically rare with 56B keyspace but handled correctly
+                log.warn("Short key collision on attempt {}/{}, retrying", attempt, MAX_KEY_GENERATION_RETRIES);
+                if (attempt == MAX_KEY_GENERATION_RETRIES) {
+                    throw new IllegalStateException("Failed to generate unique short key after " + MAX_KEY_GENERATION_RETRIES + " attempts", ex);
+                }
+            }
+        }
+        throw new IllegalStateException("Unreachable");
     }
 
 
@@ -175,16 +187,16 @@ public class ShortUrlService {
     @Transactional
     public ShortUrlDto updateShortUrl(String shortKey, String originalUrl, String currentUserId) {
 //        cachedShortUrlService.evict(shortKey);
-        ShortUrl shortUrl = shortUrlRepo.findByShortKey(shortKey).orElseThrow(() -> new RuntimeException("Short URL not found"));
+        ShortUrl shortUrl = shortUrlRepo.findByShortKey(shortKey).orElseThrow(() -> new ShortUrlNotFoundException("Short URL not found"));
 
         // ownership check
         if (shortUrl.getCreatedBy() == null || !shortUrl.getCreatedBy().getId().equals(currentUserId)) {
-            throw new RuntimeException("You are not allowed to update this URL");
+            throw new UnauthorizedException("You are not allowed to update this URL");
         }
         if (properties.validateOriginalUrl()) {
             boolean urlExists = UrlExistenceValidator.isValid(originalUrl);
             if (!urlExists) {
-                throw new RuntimeException("Invalid URL " + originalUrl);
+                throw new ShortUrlNotFoundException("Invalid URL " + originalUrl);
             }
         }
         shortUrl.setOriginalUrl(normalizeUrl(originalUrl));

@@ -1,6 +1,6 @@
 package com.greatest.shortUrl.repository;
 
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +11,6 @@ public interface UserRepo extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+
 }

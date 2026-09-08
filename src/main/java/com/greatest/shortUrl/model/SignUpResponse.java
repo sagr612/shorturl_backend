@@ -1,6 +1,6 @@
 package com.greatest.shortUrl.model;
 
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

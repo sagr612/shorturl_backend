@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.auth;
+package com.greatest.shortUrl.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greatest.shortUrl.services.RateLimiterService;
@@ -48,14 +48,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         } else if (path.equals("/api/v1/shorten/") && method.equals("POST")) {
             capacity = 10;
             bucketPrefix = "rl:create:";
-        } else if (
-                path.matches("^/api/v1/shorten/[^/]+$")
-                        && method.equals("PUT")
-        ) {
-
+        } else if (path.matches("^/api/v1/shorten/[^/]+$")&& method.equals("PUT")) {
             capacity = 20;
             bucketPrefix = "rl:update:";
-
         } else {
             capacity = 100;
             bucketPrefix = "rl:general:";

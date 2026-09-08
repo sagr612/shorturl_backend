@@ -1,8 +1,8 @@
 package com.greatest.shortUrl.services;
 
-import com.greatest.shortUrl.auth.JwtUtils;
-import com.greatest.shortUrl.entitiy.RefreshToken;
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.config.JwtUtils;
+import com.greatest.shortUrl.entity.RefreshToken;
+import com.greatest.shortUrl.entity.User;
 import com.greatest.shortUrl.exceptions.InvalidTokenException;
 import com.greatest.shortUrl.exceptions.TokenExpiredException;
 import com.greatest.shortUrl.model.JwtResponseDTO;

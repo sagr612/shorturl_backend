@@ -40,6 +40,30 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(ShortUrlNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleShortUrlNotFound(ShortUrlNotFoundException ex) {
+        log.warn("Short URL not found: {}", ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .message(ex.getMessage())
+                .error("Not Found")
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
+        log.warn("Unauthorized access: {}", ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .statusCode(HttpStatus.FORBIDDEN.value())
+                .message(ex.getMessage())
+                .error("Forbidden")
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ErrorResponse> handleInvalidToken(InvalidTokenException ex) {
         log.error("Invalid token: {}", ex.getMessage());

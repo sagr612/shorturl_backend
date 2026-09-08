@@ -1,7 +1,7 @@
 package com.greatest.shortUrl.services;
 
 
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.User;
 import com.greatest.shortUrl.model.SignUpReq;
 import com.greatest.shortUrl.model.SignUpResponse;
 import com.greatest.shortUrl.repository.UserRepo;

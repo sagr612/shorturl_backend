@@ -1,7 +1,7 @@
 package com.greatest.shortUrl.repository;
 
-import com.greatest.shortUrl.entitiy.RefreshToken;
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.RefreshToken;
+import com.greatest.shortUrl.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

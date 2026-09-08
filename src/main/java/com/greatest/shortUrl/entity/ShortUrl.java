@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.entitiy;
+package com.greatest.shortUrl.entity;
 
 
 import com.greatest.shortUrl.model.UrlStatus;
@@ -45,7 +45,7 @@ public class ShortUrl {
     @Column(name = "id", nullable = false)
     private String id;
 
-    @Column(name = "short_key", nullable = false, length = 10)
+    @Column(name = "short_key", nullable = false,unique = true, length = 10)
     private String shortKey;
 
     @Column(name = "original_url", nullable = false)

@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.entitiy;
+package com.greatest.shortUrl.entity;
 
 import com.greatest.shortUrl.model.Role;
 import jakarta.persistence.*;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")

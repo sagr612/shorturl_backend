@@ -1,6 +1,6 @@
 package com.greatest.shortUrl.repository;
 
-import com.greatest.shortUrl.entitiy.ShortUrl;
+import com.greatest.shortUrl.entity.ShortUrl;
 import com.greatest.shortUrl.model.UrlStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +25,6 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
 
     @EntityGraph(attributePaths = "createdBy")
     Page<ShortUrl> findByCreatedById(String userId, Pageable pageable);
-
 
 
     @Query("""
@@ -53,7 +52,6 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
     );
 
 
-
     @Query("""
             SELECT su
             FROM ShortUrl su
@@ -79,13 +77,11 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
     );
 
 
-
     Long countByCreatedById(String userId);
 
     Long countByCreatedByIdAndIsPrivateFalse(String userId);
 
     Long countByCreatedByIdAndIsPrivateTrue(String userId);
-
 
 
     @Query("""
@@ -94,7 +90,6 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
             WHERE su.createdBy.id = :userId
             """)
     Long sumClicksByUserId(@Param("userId") String userId);
-
 
 
     @EntityGraph(attributePaths = "createdBy")
@@ -126,11 +121,9 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
     );
 
 
-
     Long countByIsPrivateFalse();
 
     Long countByIsPrivateTrue();
-
 
 
     @Query("""
@@ -139,6 +132,12 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
             """)
     Long sumAllClicks();
 
+    @Query("""
+            SELECT u.id, COUNT(s.id), COALESCE(SUM(s.clickCount), 0)
+            FROM User u LEFT JOIN ShortUrl s ON s.createdBy.id = u.id
+            GROUP BY u.id
+            """)
+    List<Object[]> findUserUrlStats();
 
 
     @Modifying
@@ -153,8 +152,8 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
     );
 
 
-
     @Modifying
+    @Transactional
     @Query("""
             UPDATE ShortUrl su
             SET su.status = 'EXPIRED'
@@ -165,8 +164,8 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
     int markExpiredUrls(@Param("now") Instant now);
 
 
-
     @Modifying
+    @Transactional
     @Query("""
             DELETE FROM ShortUrl su
             WHERE su.status = 'EXPIRED'
@@ -175,14 +174,14 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
     int deleteExpiredUrlsOlderThan(@Param("cutoff") Instant cutoff);
 
 
-
     @Modifying
+    @Transactional
     @Query("""
-           UPDATE ShortUrl su
-           SET su.status = 'DELETED'
-           WHERE su.id IN :ids
-           AND su.createdBy.id = :userId
-           """)
+            UPDATE ShortUrl su
+            SET su.status = 'DELETED'
+            WHERE su.id IN :ids
+            AND su.createdBy.id = :userId
+            """)
     int softDeleteUserUrls(
 
             @Param("ids")
@@ -191,4 +190,5 @@ public interface ShortUrlRepo extends JpaRepository<ShortUrl, String> {
             @Param("userId")
             String userId
     );
+
 }

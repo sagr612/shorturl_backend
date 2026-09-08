@@ -1,4 +1,4 @@
-package com.greatest.shortUrl.auth;
+package com.greatest.shortUrl.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
@@ -17,24 +17,11 @@ public class CustomCorsConfiguration implements CorsConfigurationSource {
 
     @Override
     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-
         CorsConfiguration config = new CorsConfiguration();
-
-        config.setAllowedOrigins(
-                List.of(
-                        "http://localhost:5173",
-                        frontendUrl
-                )
-        );
-
-        config.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        );
-
+        config.setAllowedOrigins(List.of("http://localhost:5173", frontendUrl));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-
         config.setAllowCredentials(true);
-
         return config;
     }
 }

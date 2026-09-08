@@ -1,6 +1,6 @@
 package com.greatest.shortUrl.services;
 
-import com.greatest.shortUrl.entitiy.User;
+import com.greatest.shortUrl.entity.User;
 import com.greatest.shortUrl.model.UserDto;
 import com.greatest.shortUrl.model.UserStatsDto;
 import com.greatest.shortUrl.repository.ShortUrlRepo;
