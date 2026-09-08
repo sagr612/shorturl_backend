@@ -29,7 +29,7 @@ public class RedissonConfig {
                         "rediss://" + host + ":" + port
 //                        redis -> local redis
 //                        rediss -> redis over tls/ssl
-                );
+                )
                .setPassword(password); //for tls
 
         return Redisson.create(config);
