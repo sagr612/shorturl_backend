@@ -30,7 +30,7 @@ public class RedissonConfig {
 //                        redis -> local redis
 //                        rediss -> redis over tls/ssl
                 );
-               .setPassword(password); for tls
+               .setPassword(password); //for tls
 
         return Redisson.create(config);
     }
